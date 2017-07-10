@@ -157,7 +157,7 @@ class FilterNode(Node):
                 if type(seq[k]) not in (str, bytes):
                     continue
                 for ch in "[]=;:,":
-                    seq[k] = seq[k].replace(ch, "\\"+ch)
+                    seq[k] = seq[k].replace(ch, "\\\\"+ch)
             return seq
 
         _args = escape_chars(self.args[:], range(len(self.args)))
