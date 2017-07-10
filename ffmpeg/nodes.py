@@ -4,6 +4,7 @@ from .dag import KwargReprNode
 from ._utils import get_hash_int
 from builtins import object
 import os
+from past.builtins import basestring
 
 
 def _is_of_types(obj, types):
@@ -154,7 +155,7 @@ class FilterNode(Node):
         # Helper function to escape uncomfortable characters
         def escape_chars(seq, keys):
             for k in keys:
-                if type(seq[k]) not in (str, bytes):
+                if not isinstance(seq[k], basestring):
                     continue
                 for ch in "[]=;:,":
                     seq[k] = seq[k].replace(ch, "\\\\"+ch)
