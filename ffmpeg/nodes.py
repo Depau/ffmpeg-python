@@ -150,8 +150,22 @@ class FilterNode(Node):
 
     def _get_filter(self):
         params_text = self.name
-        arg_params = ['{}'.format(arg) for arg in self.args]
-        kwarg_params = ['{}={}'.format(k, self.kwargs[k]) for k in sorted(self.kwargs)]
+
+        # Helper function to escape uncomfortable characters
+        def escape_chars(seq, keys):
+            for k in keys:
+                if type(seq[k]) not in (str, bytes):
+                    continue
+                for ch in "[]=;:,":
+                    seq[k] = seq[k].replace(ch, "\\"+ch)
+            return seq
+
+        _args = escape_chars(self.args[:], range(len(self.args)))
+        _kwargs = escape_chars(self.kwargs.copy(), self.kwargs.keys())
+
+        arg_params = ['{}'.format(arg) for arg in _args]
+        kwarg_params = ['{}={}'.format(k, _kwargs[k]) for k in sorted(_kwargs)]
+
         params = arg_params + kwarg_params
         if params:
             params_text += '={}'.format(':'.join(params))
