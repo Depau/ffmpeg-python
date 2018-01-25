@@ -164,7 +164,7 @@ class Node(KwargReprNode):
 
 class FilterableStream(Stream):
     def __init__(self, upstream_node, upstream_label, upstream_selector=None):
-        super(FilterableStream, self).__init__(upstream_node, upstream_label, {InputNode, FilterNode, SourceNode})
+        super(FilterableStream, self).__init__(upstream_node, upstream_label, {InputNode, FilterNode, SourceNode}, upstream_selector=upstream_selector)
 
 
 class InputNode(Node):
