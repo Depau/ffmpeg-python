@@ -251,6 +251,12 @@ def test_filter_text_arg_str_escape():
 #    subprocess.check_call(['ffmpeg', '-version'])
 
 
+def test_compile():
+    out_file = ffmpeg.input('dummy.mp4').output('dummy2.mp4')
+    assert out_file.compile() == ['ffmpeg', '-i', 'dummy.mp4', 'dummy2.mp4']
+    assert out_file.compile(cmd='ffmpeg.old') == ['ffmpeg.old', '-i', 'dummy.mp4', 'dummy2.mp4']
+
+
 def test_run():
     stream = _get_complex_filter_example()
     ffmpeg.run(stream)
@@ -317,6 +323,11 @@ def test_merge_outputs():
     ]
 
 
+def test__input__start_time():
+    assert ffmpeg.input('in', ss=10.5).output('out').get_args() == ['-ss', '10.5', '-i', 'in', 'out']
+    assert ffmpeg.input('in', ss=0.0).output('out').get_args() == ['-ss', '0.0', '-i', 'in', 'out']
+
+
 def test_multi_passthrough():
     out1 = ffmpeg.input('in1.mp4').output('out1.mp4')
     out2 = ffmpeg.input('in2.mp4').output('out2.mp4')
@@ -335,6 +346,29 @@ def test_multi_passthrough():
         '-map', '[1]',  # FIXME: this should not be here (see #23)
         'out1.mp4'
     ]
+
+
+def test_sources():
+    out = (ffmpeg
+        .overlay(
+            ffmpeg.source("testsrc"),
+            ffmpeg.source("color", color="red@.3"),
+        )
+        .trim(end=5)
+        .output(TEST_OUTPUT_FILE1)
+    )
+
+    assert out.get_args() == [
+        '-filter_complex',
+        'testsrc[s0];'
+        'color=color=red@.3[s1];'
+        '[s0][s1]overlay=eof_action=repeat[s2];'
+        '[s2]trim=end=5[s3]',
+        '-map',
+        '[s3]',
+        TEST_OUTPUT_FILE1
+    ]
+
 
 
 def test_pipe():

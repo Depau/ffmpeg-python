@@ -16,10 +16,10 @@ from .nodes import (
     get_stream_spec_nodes,
     FilterNode,
     GlobalNode,
-    InputNode,   
+    InputNode,
     OutputNode,
     output_operator,
-)
+    SourceNode)
 
 
 def _get_stream_name(name):
@@ -31,7 +31,7 @@ def _convert_kwargs_to_cmd_line_args(kwargs):
     for k in sorted(kwargs.keys()):
         v = kwargs[k]
         args.append('-{}'.format(k))
-        if v:
+        if v is not None:
             args.append('{}'.format(v))
     return args
 
@@ -123,10 +123,11 @@ def get_args(stream_spec, overwrite_output=False):
     input_nodes = [node for node in sorted_nodes if isinstance(node, InputNode)]
     output_nodes = [node for node in sorted_nodes if isinstance(node, OutputNode)]
     global_nodes = [node for node in sorted_nodes if isinstance(node, GlobalNode)]
-    filter_nodes = [node for node in sorted_nodes if isinstance(node, FilterNode)]
+    filter_nodes = [node for node in sorted_nodes if isinstance(node, (FilterNode, SourceNode))]
     stream_name_map = {(node, None): _get_stream_name(i) for i, node in enumerate(input_nodes)}
     filter_arg = _get_filter_arg(filter_nodes, outgoing_edge_maps, stream_name_map)
-    args += reduce(operator.add, [_get_input_args(node) for node in input_nodes])
+    if len(input_nodes) > 0:
+        args += reduce(operator.add, [_get_input_args(node) for node in input_nodes])
     if filter_arg:
         args += ['-filter_complex', filter_arg]
     args += reduce(operator.add, [_get_output_args(node, stream_name_map) for node in output_nodes])
@@ -137,21 +138,27 @@ def get_args(stream_spec, overwrite_output=False):
 
 
 @output_operator()
+def compile(stream_spec, cmd='ffmpeg', **kwargs):
+    """Build command-line for ffmpeg."""
+    if isinstance(cmd, basestring):
+        cmd = [cmd]
+    elif type(cmd) != list:
+        cmd = list(cmd)
+    return cmd + get_args(stream_spec, **kwargs)
+
+
+@output_operator()
 def run(stream_spec, cmd='ffmpeg', **kwargs):
     """Run ffmpeg on node graph.
 
     Args:
         **kwargs: keyword-arguments passed to ``get_args()`` (e.g. ``overwrite_output=True``).
     """
-    if isinstance(cmd, basestring):
-        cmd = [cmd]
-    elif type(cmd) != list:
-        cmd = list(cmd)
-    args = cmd + get_args(stream_spec, **kwargs)
-    _subprocess.check_call(args)
+    _subprocess.check_call(compile(stream_spec, cmd, **kwargs))
 
 
 __all__ = [
+    'compile',
     'get_args',
     'run',
 ]
