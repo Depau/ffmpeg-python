@@ -184,8 +184,8 @@ def topo_sort(downstream_nodes):
         visit(upstream_node, upstream_label, None, None)
 
     # Sort outgoing edge maps by upstream label
-    for outgoing_edge_map in outgoing_edge_maps:
-        for label in sorted(outgoing_edge_map.keys()):
-            outgoing_edge_map.move_to_end(label)
+    for map in outgoing_edge_maps.values():
+        for label in sorted(map.keys()):
+            map.move_to_end(label)
 
     return sorted_nodes, outgoing_edge_maps
